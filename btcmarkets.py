@@ -23,10 +23,14 @@ def request(action, key, signature, timestamp, path, data):
     return json.load(response)
 
 
-def get_request(key, secret, path):
+def get_request(key, secret, path, queryString=None):
      
     nowInMilisecond = str(int(time.time() * 1000))
-    stringToSign = path + "\n" + nowInMilisecond + "\n"  
+    stringToSign = path + "\n"
+    if stringToSign:
+        stringToSign += queryString + '\n'
+        path += '?'+queryString
+    stringToSign += nowInMilisecond + "\n"  
 
     signature = base64.b64encode(hmac.new(secret, stringToSign, digestmod=hashlib.sha512).digest())
 
@@ -70,6 +74,8 @@ class BTCMarkets:
         postData = json.dumps(data, separators=(',', ':'))
         return post_request(self.key, self.secret, '/order/history', postData) 
 
+
+        
     def order_open(self, currency, instrument, limit, since):
      	
         data = OrderedDict([('currency', currency),('instrument', instrument),('limit', limit),('since', since)])
@@ -77,7 +83,7 @@ class BTCMarkets:
         return post_request(self.key, self.secret, '/order/open', postData) 
 
     def order_detail(self, order_ids):
-     	data_obj = {'orderIds':order_ids} 
+        data_obj = {'orderIds':order_ids} 
         postData = json.dumps(data_obj, separators=(',', ':'))
         return post_request(self.key, self.secret, '/order/detail', postData) 
 
@@ -97,6 +103,12 @@ class BTCMarkets:
 
         return get_request(self.key, self.secret, '/market/%s/%s/trades' % (currency_in,currency_out))
 
+    def transfer_history(self,limit=20):
 
+        return get_request(self.key, self.secret, '/fundtransfer/history', 'limit=%d' % limit)
 
+    def withdraw_aud(self, name, bank, bsb, account_no, amount):
+        data = OrderedDict([("accountName",name),("accountNumber",account_no),("bankName",bank),("bsbNumber",bsb),("amount",int(amount*100000000)),("currency","AUD")])
+        postData = json.dumps(data, separators=(',', ':'))
 
+        return post_request(self.key, self.secret, '/fundtransfer/withdrawEFT', postData) 

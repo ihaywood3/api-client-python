@@ -27,7 +27,7 @@ def get_request(key, secret, path, queryString=None):
      
     nowInMilisecond = str(int(time.time() * 1000))
     stringToSign = path + "\n"
-    if stringToSign:
+    if queryString:
         stringToSign += queryString + '\n'
         path += '?'+queryString
     stringToSign += nowInMilisecond + "\n"  
@@ -108,7 +108,10 @@ class BTCMarkets:
         return get_request(self.key, self.secret, '/fundtransfer/history', 'limit=%d' % limit)
 
     def withdraw_aud(self, name, bank, bsb, account_no, amount):
-        data = OrderedDict([("accountName",name),("accountNumber",account_no),("bankName",bank),("bsbNumber",bsb),("amount",int(amount*100000000)),("currency","AUD")])
+        data = OrderedDict([("accountName",name),("accountNumber",account_no),("bankName",bank),("bsbNumber",bsb),("amount",int(amount*100)*1000000),("currency","AUD")])
         postData = json.dumps(data, separators=(',', ':'))
 
         return post_request(self.key, self.secret, '/fundtransfer/withdrawEFT', postData) 
+
+    def account_balance(self):
+        return get_request(self.key, self.secret, '/account/balance')
